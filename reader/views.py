@@ -27,26 +27,29 @@ def upload_file(request):
                 return redirect('home')
             handle_uploaded_file(f)
             # return HttpResponseRedirect('success/')
-            data1 = pd.read_excel('reader/destination/destination'+f.name)
-            print(type(data1))
-            print (data1)
-            data2 = data1.to_html()
+            df = pd.read_excel('reader/destination/destination'+f.name)
             
-            Student.objects.bulk_create(
-            Student(**vals) for vals in data1.to_dict('records')
-            )
+            # if not Student.objects.filter(id=data2[0]).exists():
+            #         obj = Student(id=data2[0], first_name=data2[1], last_name=data2[2], email=data2[3], gender=data2[4])
+            # col1=data1[0]
+            # if data1.loc[id] not in data2:
+            # data3 = data1.copy(deep=True)
+            # print(data1.columns)
+            # print(data1['id'])
+            # if  data3['id'] not in data1['id'] :
+            objs = list()
+            for index, row in df.iterrows():
+                grade = Grade.objects.filter(code=row["grade"]).values("id")
+                obj=Student(id=row["id"],first_name=row["first_name"],last_name=row["last_name"],email=row["email"],gender=row["gender"],grade_id =grade)
+                objs.append(obj)
 
-            # l1 = list()
-            # for row in data1.iteritems():
-            #     r1 = list()
-            #     for cell in row:
-            #         r1.append(cell)
-            #     l1.append(r1)
+            # Student.objects.bulk_create(
+            # Student(**vals) for vals in data1.to_dict('records')
+            # )
+            Student.objects.bulk_create(objs)
 
-
-
-            return HttpResponse(data2)
-            # return render(request,'reader/success.html',{'data':data2})
+            object_list = Student.objects.all().values('id', 'first_name', 'last_name', 'email', 'gender', 'grade__code')
+            return render(request,'reader/success.html',{'object_list':object_list})   
 
 
     else:
